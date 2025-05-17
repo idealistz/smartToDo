@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户注册 - ToDoList</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Pacifico&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @keyframes fadeInElement {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes slideInFromLeft {
+            from { opacity: 0; transform: translateX(-40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInFromRight {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInFromBottom {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes decorativeShapeAnim {
+            0% {
+                transform: rotate(0deg) scale(1);
+                opacity: 0.08;
+            }
+            50% {
+                transform: rotate(180deg) scale(1.15);
+                opacity: 0.15;
+            }
+            100% {
+                transform: rotate(360deg) scale(1);
+                opacity: 0.08;
+            }
+        }
+
+        @keyframes slideInLeftFunky { 
+            0% { opacity: 0; transform: translateX(-100px) scale(0.7) rotate(-15deg); }
+            60% { opacity: 1; transform: translateX(20px) scale(1.1) rotate(7deg); } 
+            80% { transform: translateX(-10px) scale(0.95) rotate(-4deg); } 
+            100% { opacity: 1; transform: translateX(0) scale(1) rotate(0deg); }
+        }
+        @keyframes slideInRightFunky { 
+            0% { opacity: 0; transform: translateX(100px) scale(0.7) rotate(15deg); }
+            60% { opacity: 1; transform: translateX(-20px) scale(1.1) rotate(-7deg); } 
+            80% { transform: translateX(10px) scale(0.95) rotate(4deg); } 
+            100% { opacity: 1; transform: translateX(0) scale(1) rotate(0deg); }
+        }
+
+        @keyframes taglineWiggle {
+          0%, 100% { transform: rotate(0deg) translateY(0); } 
+          25% { transform: rotate(-7deg) translateY(-3px); } 
+          75% { transform: rotate(7deg) translateY(-3px); }  
+        }
+
+        @keyframes animatedBackground {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes slideInFromBottomSpecial {
+            0% {
+                opacity: 0;
+                transform: translateY(120px) scale(0.7) rotateX(-45deg);
+                transform-origin: bottom center;
+            }
+            70% { 
+                opacity: 1;
+                transform: translateY(-15px) scale(1.05) rotateX(10deg);
+                transform-origin: bottom center;
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1) rotateX(0deg);
+                transform-origin: bottom center;
+            }
+        }
+
+        @keyframes techListItemAppear {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background: linear-gradient(135deg, #e0eafc 0%, #f8f0fc 100%); 
+            background-size: 200% 200%; 
+            animation: animatedBackground 18s ease infinite; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            box-sizing: border-box;
+            position: relative; 
+            overflow-x: hidden; 
+        }
+
+        body::before, 
+        body::after {
+            content: '';
+            position: absolute;
+            z-index: -1; 
+            border-radius: 50%;
+            filter: blur(60px); 
+            animation: decorativeShapeAnim 40s linear infinite alternate;
+        }
+
+        body::before {
+            width: 450px; 
+            height: 450px;
+            top: -200px; 
+            left: -220px; 
+            background-color: rgba(120, 170, 255, 0.25); 
+        }
+
+        body::after {
+            width: 400px; 
+            height: 400px;
+            top: -150px; 
+            right: -200px; 
+            background-color: rgba(150, 200, 255, 0.2); 
+            animation-duration: 45s; 
+            animation-direction: alternate-reverse;
+        }
+        .page-header {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            width: 100%;
+            max-width: 1300px; 
+            margin: 0 auto 30px auto; 
+            padding: 0 10px; 
+            opacity: 0; 
+            transform: translateY(-20px);
+            animation: fadeInElement 0.7s 0.1s ease-out forwards;
+        }
+
+        .top-feature-snippet {
+            color: #555;
+            opacity: 0;
+            flex-basis: 240px; 
+            flex-shrink: 0;
+            padding: 10px;
+            border-radius: 6px;
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1.5), 
+                        background-color 0.3s ease, 
+                        box-shadow 0.3s ease;
+        }
+        .top-feature-snippet:hover {
+            transform: scale(1.12) translateY(-6px) rotate(3deg); 
+            background-color: rgba(255, 255, 255, 0.9); 
+            box-shadow: 0 10px 22px rgba(100, 150, 255, 0.25); 
+        }
+
+        .top-feature-snippet.left-top-feature {
+             animation: slideInLeftFunky 1.1s 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
+             text-align: left;
+        }
+        .top-feature-snippet.right-top-feature {
+            animation: slideInRightFunky 1.1s 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
+            text-align: right;
+        }
+
+        .top-feature-snippet h4 {
+            font-family: 'Quicksand', sans-serif; 
+            font-weight: 600; 
+            font-size: 17px; 
+            color: #1a2b48;
+            margin-top: 0;
+            margin-bottom: 6px;
+            display: flex; 
+            align-items: center;
+        }
+        .top-feature-snippet.right-top-feature h4 {
+            justify-content: flex-end; 
+        }
+
+        .top-feature-snippet h4 .icon { 
+            font-size: 1.15em; 
+            margin-right: 7px; 
+            color: #1890ff;
+            line-height: 1; 
+        }
+        .top-feature-snippet.right-top-feature h4 .icon {
+            margin-right: 0; 
+            margin-left: 7px; 
+        }
+
+        .top-feature-snippet p {
+            font-family: 'Quicksand', sans-serif; 
+            font-weight: 500; 
+            font-size: 14px; 
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 0;
+        }
+
+        .logo-tagline-wrapper {
+            text-align: center; 
+            flex-grow: 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 12px; 
+        }
+
+        .logo-svg { 
+            max-width: 90px; 
+            height: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .logo-svg:hover {
+            transform: scale(1.05);
+        }
+
+        .page-header .tagline {
+            font-family: 'Pacifico', cursive; 
+            font-weight: 400; 
+            font-size: 32px; 
+            color: #1890ff; 
+            margin: 10px 0 0 0; 
+            text-align: center; 
+            opacity: 0; 
+            animation: taglineWiggle 1s ease-in-out 0.9s forwards, fadeInElement 0.7s 0.7s ease-out forwards; 
+            line-height: 1.2; 
+        }
+
+        .main-login-area {
+            display: flex;
+            justify-content: center; 
+            align-items: flex-start; 
+            width: 100%;
+            max-width: 1150px; 
+            gap: 55px; 
+        }
+
+        .side-panel {
+            flex: 1; 
+            min-width: 260px; 
+            max-width: 290px; 
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            display: flex; 
+            flex-direction: column;
+            gap: 20px; 
+        }
+
+        .left-features {
+            opacity: 0;
+            animation: slideInFromLeft 0.9s 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+
+        .right-features {
+            opacity: 0;
+            animation: slideInFromRight 0.9s 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+            margin-left: 80px; 
+        }
+        
+        .feature-block {
+            text-align: left;
+            background-color: #fdfdfd; 
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid #e8e8e8;
+            transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.35s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.35s cubic-bezier(0.25, 0.8, 0.25, 1); 
+        }
+
+        .feature-block:hover { 
+            transform: translateY(-7px) scale(1.03);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12); 
+            border-color: #40a9ff; 
+        }
+
+        .feature-block .icon {
+            font-size: 22px;
+            color: #1890ff;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .feature-block h4 {
+            font-family: 'Quicksand', sans-serif; 
+            font-weight: 600; 
+            font-size: 17px;
+            color: #1a2b48;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        .feature-block p {
+            font-family: 'Quicksand', sans-serif; 
+            font-weight: 500; 
+            font-size: 13px;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 0;
+        }
+        
+        .login-form-column {
+            flex-shrink: 0; 
+            width: 100%;
+            max-width: 400px; 
+        }
+
+        .login-container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%; 
+            text-align: center;
+            opacity: 0; 
+            transform: translateY(20px); 
+            animation: fadeInElement 1.0s 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; 
+        }
+
+        .login-container h2 {
+            margin-bottom: 24px;
+            color: #1a2b48;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.35s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .input-group input:focus {
+            border-color: #40a9ff;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.35s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+            margin-bottom: 20px;
+        }
+
+        .login-button:hover {
+            background-color: #40a9ff;
+            box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+        }
+        
+        .login-button:active {
+            background-color: #096dd9;
+        }
+
+        .signup-link {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .signup-link a {
+            color: #1890ff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .signup-link a:hover {
+            color: #40a9ff;
+            text-decoration: underline;
+        }
+
+        .tech-stack-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 50px auto 30px auto;
+            padding: 30px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            opacity: 0; 
+            transform: translateY(40px); 
+            animation: slideInFromBottomSpecial 1.1s 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; 
+        }
+
+        .tech-stack-container h3 {
+            font-size: 20px;
+            color: #1a2b48;
+            margin-bottom: 25px;
+        }
+
+        .tech-stack-container ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap; 
+            justify-content: center;
+            gap: 15px 25px; 
+        }
+
+        .tech-stack-container li {
+            font-size: 15px;
+            color: #333;
+            background-color: #f0f2f5;
+            padding: 8px 15px;
+            border-radius: 20px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            opacity: 0; 
+            animation: techListItemAppear 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease; 
+        }
+        
+        .tech-stack-container li:nth-child(1) { animation-delay: 2.0s; }
+        .tech-stack-container li:nth-child(2) { animation-delay: 2.1s; }
+        .tech-stack-container li:nth-child(3) { animation-delay: 2.2s; }
+        .tech-stack-container li:nth-child(4) { animation-delay: 2.3s; }
+        .tech-stack-container li:nth-child(5) { animation-delay: 2.4s; }
+        .tech-stack-container li:nth-child(6) { animation-delay: 2.5s; }
+
+        .tech-stack-container li:hover {
+            transform: translateY(-4px) scale(1.08) rotate(1.5deg); 
+            background-color: #dde9f6; 
+            box-shadow: 0 5px 12px rgba(24, 144, 255, 0.25); 
+        }
+
+        /* 新增: 输入框错误样式 */
+        .input-group input.input-error {
+            border-color: red !important;
+            box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.2) !important;
+        }
+        .input-group .validation-error {
+            /* 基本占位，具体样式由JS设定以确保动态性 */
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <div class="top-feature-snippet left-top-feature">
+            <h4><span class="icon">💡</span> 想法随心记</h4>
+            <p>快速捕捉灵感，随时记录待办，不让好点子轻易溜走。</p>
+        </div>
+        <div class="logo-tagline-wrapper">
+            <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logoMainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#2D7CFE; stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#1890ff; stop-opacity:1" />
+                    </linearGradient>
+                    <linearGradient id="logoAccentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#52c41a; stop-opacity:1" /> 
+                        <stop offset="100%" style="stop-color:#389e0d; stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <rect width="100" height="100" rx="22" ry="22" fill="url(#logoMainGradient)"/>
+                <rect x="2" y="2" width="96" height="96" rx="20" ry="20" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+                <path d="M30 52 L46 68 L72 40" stroke="white" stroke-width="11" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <animate id="logoPathAnimation" attributeName="stroke-dasharray" from="0, 100" to="100, 0" dur="0.8s" fill="freeze" />
+                </path>
+                <line x1="25" y1="78" x2="75" y2="78" stroke="rgba(255,255,255,0.3)" stroke-width="4" stroke-linecap="round"/> 
+            </svg>
+            <p class="tagline">一个现代化、智能的任务管理系统</p>
+        </div>
+        <div class="top-feature-snippet right-top-feature">
+            <h4><span class="icon">🌓</span> 主题个性换</h4> 
+            <p>提供亮暗主题切换，选择你偏爱的界面风格，舒适办公。</p>
+        </div>
+    </div>
+
+    <div class="main-login-area">
+        <div class="side-panel left-features">
+            <div class="feature-block">
+                <span class="icon">🎯</span>
+                <h4>四象限视图</h4>
+                <p>基于艾森豪威尔矩阵，将任务按重要和紧急程度划分，助您科学规划时间，聚焦关键要务。</p>
+            </div>
+            <div class="feature-block">
+                <span class="icon">📅</span>
+                <h4>今天视图</h4>
+                <p>集中展示当天需要完成的任务，让您对当日事宜一目了然，保持专注和高效。</p>
+            </div>
+        </div>
+
+        <div class="login-form-column">
+            <div class="login-container">
+                <h2>创建账户</h2>
+                <form id="registerForm">
+                    <div class="input-group">
+                        <label for="username">用户名</label>
+                        <input type="text" id="username" name="username" placeholder="请输入您的用户名" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="password">密码</label>
+                        <input type="password" id="password" name="password" placeholder="请输入您的密码" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="confirmPassword">确认密码</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="请再次输入您的密码" required>
+                    </div>
+                    <button type="submit" class="login-button">立即注册</button>
+                    <div class="signup-link">
+                        已有账户? <a href="login.html">立即登录</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="side-panel right-features">
+            <div class="feature-block">
+                <span class="icon">🔍</span>
+                <h4>快速搜索</h4>
+                <p>通过 Ctrl+K 快捷键激活全局搜索，迅速在所有任务和标签中定位所需信息，大幅提升效率。</p>
+            </div>
+            <div class="feature-block">
+                <span class="icon">🎨</span>
+                <h4>主题切换</h4>
+                <p>支持亮色与暗色模式一键切换，打造更个性化、更舒适的视觉和使用体验。</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="tech-stack-container">
+        <h3>当前技术栈</h3>
+        <ul>
+            <li>HTML5</li>
+            <li>CSS3 (Flexbox, Grid, Variables)</li>
+            <li>JavaScript (ES6+)</li>
+            <li>Font Awesome</li>
+            <li>响应式设计</li>
+            <li>本地存储 (LocalStorage)</li>
+        </ul>
+    </div>
+
+    <script>
+        function clearError(inputElement) {
+            const parentGroup = inputElement.closest('.input-group');
+            if (!parentGroup) return;
+            const errorElement = parentGroup.querySelector('.validation-error');
+            if (errorElement) {
+                errorElement.remove();
+            }
+            inputElement.classList.remove('input-error');
+        }
+
+        function displayError(inputElement, message) {
+            clearError(inputElement); 
+            const parentGroup = inputElement.closest('.input-group');
+            if (!parentGroup) return;
+            const errorElement = document.createElement('span');
+            errorElement.className = 'validation-error';
+            errorElement.style.color = 'red';
+            errorElement.style.fontSize = '0.875em';
+            errorElement.style.display = 'block';
+            errorElement.style.marginTop = '4px';
+            errorElement.textContent = message;
+            parentGroup.appendChild(errorElement);
+            inputElement.classList.add('input-error');
+        }
+
+        function validateRegistrationInputs(usernameValue, passwordValue, confirmPasswordValue) {
+            let isValid = true;
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+
+            // 清除旧的特定字段错误，以防上次提交失败时遗留
+            clearError(usernameInput);
+            clearError(passwordInput);
+            clearError(confirmPasswordInput);
+            
+            const trimmedUsername = usernameValue.trim();
+
+            // 用户名校验
+            if (!usernameValue) { // 检查原始值是否为空
+                displayError(usernameInput, '用户名为必填项。');
+                isValid = false;
+            } else if (trimmedUsername.length < 2) {
+                displayError(usernameInput, '用户名至少需要2个字符。');
+                isValid = false;
+            } else if (!/^[a-zA-Z\u4e00-\u9fa5]+$/.test(trimmedUsername)) {
+                displayError(usernameInput, '用户名只能包含中文或英文字符。');
+                isValid = false;
+            }
+
+            // 密码校验 (密码通常不trim，允许前后空格作为密码一部分)
+            if (!passwordValue) {
+                displayError(passwordInput, '密码为必填项。');
+                isValid = false;
+            } else if (passwordValue.length < 6) {
+                displayError(passwordInput, '密码长度不能少于6位。');
+                isValid = false;
+            }
+
+            // 确认密码校验
+            if (!confirmPasswordValue) {
+                displayError(confirmPasswordInput, '确认密码为必填项。');
+                isValid = false;
+            } else if (passwordValue && passwordValue !== confirmPasswordValue) { // 仅在密码有值时比较
+                displayError(confirmPasswordInput, '两次输入的密码不一致！');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+
+            const username = usernameInput.value;
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            // 清除可能存在的旧的全局错误信息 (针对非字段特定的错误)
+            const form = event.target;
+            const oldGlobalError = form.querySelector('p.form-global-error');
+            if (oldGlobalError) {
+                oldGlobalError.remove();
+            }
+
+            if (!validateRegistrationInputs(username, password, confirmPassword)) {
+                return;
+            }
+
+            console.log('表单数据 (通过前端校验):', {
+                username: username.trim(), // 提交时使用trim后的username
+                password: password
+            });
+
+            const registerButton = this.querySelector('.login-button');
+            const originalButtonText = registerButton.textContent;
+
+            try {
+                registerButton.textContent = '注册中...';
+                registerButton.disabled = true;
+                console.log('开始注册处理...');
+
+                setTimeout(() => {
+                    let users = JSON.parse(localStorage.getItem('users') || '[]');
+                    const trimmedUsernameForStorage = username.trim(); 
+                    
+                    const userExists = users.some(user => user.username === trimmedUsernameForStorage);
+                    if (userExists) {
+                        displayError(usernameInput, '用户名已被占用。'); 
+                        registerButton.textContent = originalButtonText;
+                        registerButton.disabled = false;
+                        return;
+                    }
+                    
+                    users.push({
+                        username: trimmedUsernameForStorage, 
+                        password: password, 
+                        createdAt: new Date().toISOString()
+                    });
+                    
+                    localStorage.setItem('users', JSON.stringify(users));
+                    
+                    alert('注册成功！即将跳转到登录页面。');
+                    window.location.href = 'login.html'; 
+                }, 500);
+
+            } catch (error) {
+                console.error('Registration failed (catch block):', error);
+                const globalErrorMsg = document.createElement('p');
+                globalErrorMsg.style.color = 'red';
+                globalErrorMsg.style.marginTop = '10px';
+                globalErrorMsg.className = 'form-global-error'; // 新增类名用于区分
+                globalErrorMsg.textContent = '注册发生意外错误，请稍后重试。';
+                form.appendChild(globalErrorMsg); // 添加到表单末尾
+
+                if(registerButton){ // 确保按钮存在
+                    registerButton.textContent = originalButtonText;
+                    registerButton.disabled = false;
+                }
+            }
+        });
+
+        // Logo 悬停动画重播 (与 login.html 保持一致)
+        const logoSvg = document.querySelector('.logo-svg');
+        const logoAnimation = document.getElementById('logoPathAnimation');
+        if (logoSvg && logoAnimation) {
+            logoSvg.addEventListener('mouseenter', () => {
+                logoAnimation.beginElement();
+            });
+        }
+    </script>
+</body>
+</html> 

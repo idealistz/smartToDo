@@ -1,0 +1,241 @@
+// 1. 添加positionContextMenu函数
+// 将此函数添加在closeContextMenuOnClickOutside函数之后
+
+// 通用的上下文菜单定位函数
+function positionContextMenu(menu, event) {
+    // 确保菜单可见以获取其尺寸
+    menu.style.visibility = 'hidden';
+    menu.style.display = 'block';
+    
+    // 获取菜单尺寸和视口信息
+    const menuHeight = menu.offsetHeight;
+    const menuWidth = menu.offsetWidth;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const buffer = 5; // 边缘安全距离
+    
+    // 初始位置设为鼠标点击位置
+    let top = event.clientY;
+    let left = event.clientX;
+    
+    // 调整位置，确保菜单不会超出视口边界
+    if (left + menuWidth > viewportWidth - buffer) {
+        left = viewportWidth - menuWidth - buffer;
+    }
+    if (top + menuHeight > viewportHeight - buffer) {
+        top = viewportHeight - menuHeight - buffer;
+    }
+    
+    // 确保菜单不会显示在视口外
+    if (left < buffer) left = buffer;
+    if (top < buffer) top = buffer;
+    
+    // 应用计算后的位置
+    menu.style.top = `${top}px`;
+    menu.style.left = `${left}px`;
+    menu.style.visibility = 'visible';
+    
+    return { top, left }; // 返回计算后的位置，以便调用者使用
+}
+
+// 2. 修复showIdeaSubTaskContextMenu函数
+// 替换showIdeaSubTaskContextMenu函数中的定位代码
+
+// 已修复的showIdeaSubTaskContextMenu函数
+function showIdeaSubTaskContextMenu(event, ideaId, subTaskId, subTaskDataFromRender) {
+    event.preventDefault();
+    closeContextMenu(); // Close any existing general context menus
+
+    // It's safer to re-fetch the subTask to ensure we have the latest data,
+    // especially if the context menu action might modify it before another action.
+    const currentIdea = ideas.find(i => i.id === parseInt(ideaId));
+    let currentSubTask = null;
+    if (currentIdea) {
+        const subTaskToFindId = parseFloat(subTaskId);
+        currentSubTask = currentIdea.subTasks.find(st => st.id === subTaskToFindId);
+    }
+
+    if (!currentSubTask) {
+        console.warn(`SubTask ${subTaskId} not found for context menu in idea ${ideaId}. Using potentially stale data from render.`);
+        // Fallback to subTaskDataFromRender if not found, though this is less ideal.
+        // This indicates a potential issue if the subtask was deleted between render and context menu click.
+        currentSubTask = subTaskDataFromRender; 
+        if (!currentSubTask) { // If even subTaskDataFromRender is somehow null/undefined
+            console.error("Cannot show context menu: SubTask data completely unavailable.");
+            return;
+        }
+    }
+
+    const menu = document.createElement('div');
+    menu.className = 'custom-context-menu subtask-context-menu'; // Add a specific class if needed for styling
+
+    const options = [
+        {
+            label: '编辑子任务',
+            icon: 'fas fa-edit',
+            action: () => {
+                const newText = prompt('编辑子任务内容:', currentSubTask.text);
+                if (newText !== null && newText.trim() !== '') {
+                    currentSubTask.text = newText.trim();
+                    saveIdeas();
+                    renderIdeas();
+                }
+            }
+        },
+        {
+            label: '切换优先级',
+            icon: 'fas fa-flag',
+            action: () => {
+                const priorities = ['', 'low', 'medium', 'high']; // none, low, medium, high
+                let currentPriorityIndex = priorities.indexOf(currentSubTask.priority || '');
+                currentPriorityIndex = (currentPriorityIndex + 1) % priorities.length;
+                currentSubTask.priority = priorities[currentPriorityIndex];
+                console.log('Priority Action: currentSubTask.priority set to:', currentSubTask.priority); // Log new priority
+
+                // Verify if change is reflected in the main 'ideas' array before saving
+                const globalIdea = ideas.find(i => i.id === parseInt(ideaId));
+                const globalSubTask = globalIdea?.subTasks.find(st => st.id === parseFloat(subTaskId)); // Use parseFloat for ID
+                console.log('Priority Action: globalSubTask.priority in ideas array is:', globalSubTask?.priority);
+
+                saveIdeas();
+                renderIdeas();
+            }
+        },
+        {
+            label: '移至垃圾桶',
+            icon: 'fas fa-trash-alt',
+            isDelete: true,
+            action: () => {
+                if (confirm(`确定要将子任务 "${currentSubTask.text}" 移至垃圾桶吗？`)) {
+                    trashIdeaSubTask(ideaId, currentSubTask.id.toString()); // Ensure ID is string for trashIdeaSubTask
+                }
+            }
+        }
+    ];
+
+    options.forEach(opt => {
+        const optionElement = document.createElement('div');
+        optionElement.className = 'context-menu-option';
+        if (opt.isDelete) {
+            optionElement.classList.add('delete');
+        }
+        optionElement.innerHTML = `<i class="${opt.icon}"></i> ${opt.label}`;
+        optionElement.onclick = (e) => {
+            e.stopPropagation();
+            opt.action();
+            closeContextMenu(); // 操作后关闭菜单
+        };
+        menu.appendChild(optionElement);
+    });
+
+    document.body.appendChild(menu);
+    
+    // 定位菜单
+    menu.style.visibility = 'hidden';
+    menu.style.display = 'block';
+    
+    const menuHeight = menu.offsetHeight;
+    const menuWidth = menu.offsetWidth;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const buffer = 5;
+    
+    let top = event.clientY;
+    let left = event.clientX;
+    
+    if (left + menuWidth > viewportWidth - buffer) {
+        left = viewportWidth - menuWidth - buffer;
+    }
+    if (top + menuHeight > viewportHeight - buffer) {
+        top = viewportHeight - menuHeight - buffer;
+    }
+    if (left < buffer) left = buffer;
+    if (top < buffer) top = buffer;
+    
+    menu.style.top = `${top}px`;
+    menu.style.left = `${left}px`;
+    menu.style.visibility = 'visible';
+    menu.style.zIndex = '1260'; // 确保子菜单在最上层
+
+    // 添加全局点击监听器以关闭菜单
+    setTimeout(() => {
+        document.addEventListener('click', closeContextMenuOnClickOutside, true);
+    }, 0);
+}
+
+// 3. 修复createPrioritySubMenu函数
+// 替换createPrioritySubMenu函数中的定位代码
+
+// 已修复的createPrioritySubMenu函数
+function createPrioritySubMenu(taskId, x, y) {
+    closeContextMenu(); // 关闭任何已存在的上下文菜单
+
+    const task = tasks.find(t => t.id === parseInt(taskId));
+    if (!task) {
+        console.warn(`Task ${taskId} not found for priority submenu.`);
+        return;
+    }
+
+    const subMenu = document.createElement('div');
+    subMenu.className = 'custom-context-menu custom-context-submenu'; // 特定子菜单类
+
+    const priorityOptions = [
+        { label: '无优先级', value: '', icon: 'fas fa-ban' },
+        { label: '低', value: 'low', icon: 'fas fa-flag priority-low-icon' }, // 使用特定类以便CSS着色
+        { label: '中', value: 'medium', icon: 'fas fa-flag priority-medium-icon' },
+        { label: '高', value: 'high', icon: 'fas fa-flag priority-high-icon' }
+    ];
+
+    priorityOptions.forEach(opt => {
+        const optionElement = document.createElement('div');
+        optionElement.className = 'context-menu-option';
+        if (task.priority === opt.value) {
+            optionElement.classList.add('selected'); // 标记当前选中的优先级
+        }
+        optionElement.innerHTML = `<i class="${opt.icon}"></i> ${opt.label}`;
+        
+        optionElement.onclick = (event) => {
+            event.stopPropagation();
+            task.priority = opt.value;
+            saveTasks();
+            renderTasks(); // 或更精细的更新逻辑，例如只更新该任务项
+            closeContextMenu(); // 关闭所有自定义菜单
+        };
+        subMenu.appendChild(optionElement);
+    });
+
+    document.body.appendChild(subMenu);
+
+    // 定位子菜单
+    subMenu.style.visibility = 'hidden';
+    subMenu.style.display = 'block';
+    
+    const menuHeight = subMenu.offsetHeight;
+    const menuWidth = subMenu.offsetWidth;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const buffer = 5;
+    
+    let topPos = y;
+    let leftPos = x;
+    
+    // 优化菜单位置，避免超出屏幕边界
+    if (leftPos + menuWidth > viewportWidth - buffer) {
+        leftPos = viewportWidth - menuWidth - buffer;
+    }
+    if (topPos + menuHeight > viewportHeight - buffer) {
+        topPos = viewportHeight - menuHeight - buffer;
+    }
+    if (leftPos < buffer) leftPos = buffer;
+    if (topPos < buffer) topPos = buffer;
+    
+    subMenu.style.top = `${topPos}px`;
+    subMenu.style.left = `${leftPos}px`;
+    subMenu.style.visibility = 'visible';
+    subMenu.style.zIndex = '1260'; // 确保在其他菜单之上
+    
+    // 添加全局点击监听器以关闭
+    setTimeout(() => {
+        document.addEventListener('click', closeContextMenuOnClickOutside, true);
+    }, 0);
+} 

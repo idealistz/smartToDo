@@ -1,0 +1,119 @@
+/* 侧边栏宽度调节器样式 */
+.sidebar {
+    position: relative;
+    overflow-x: hidden; /* 防止水平滚动条 */
+    transition: width 0.25s ease-in-out, padding 0.25s ease-in-out;
+}
+
+.sidebar-resizer {
+    position: absolute;
+    top: 0;
+    right: -5px; /* 调整位置使其更容易点击 */
+    width: 10px; /* 增加宽度使其更容易点击 */
+    height: 100%;
+    background-color: transparent;
+    cursor: col-resize;
+    z-index: 100;
+    transition: all 0.2s ease;
+}
+
+.sidebar-resizer:hover, 
+.sidebar-resizer.active {
+    background-color: var(--primary-color);
+}
+
+/* 添加垂直指示器让调整手柄更明显 */
+.sidebar-resizer::before {
+    content: '⠿'; /* 使用点阵字符作为指示器 */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    color: var(--gray-500);
+    opacity: 0.6;
+    transition: all 0.2s ease;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.1);
+    line-height: 1;
+    pointer-events: none; /* 防止干扰点击 */
+}
+
+.sidebar-resizer:hover::before,
+.sidebar-resizer.active::before {
+    color: var(--primary-color);
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+}
+
+/* 添加顶部和底部指示器 */
+.sidebar-resizer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        transparent 30%,
+        var(--primary-color) 30%,
+        var(--primary-color) 70%,
+        transparent 70%,
+        transparent 100%
+    );
+    opacity: 0;
+    transform: translateX(-50%);
+    transition: opacity 0.2s ease;
+}
+
+.sidebar-resizer:hover::after,
+.sidebar-resizer.active::after {
+    opacity: 0.3;
+}
+
+/* 鼠标拖动时的效果 */
+body.resizing {
+    cursor: col-resize !important;
+    user-select: none;
+}
+
+/* 宽度重置的视觉反馈动画 - 更加温和 */
+.sidebar.width-reset {
+    transition: width 0.25s ease-in-out;
+    background-color: rgba(var(--primary-color-rgb, 79, 109, 245), 0.05);
+}
+
+/* 移动设备上的增强样式 */
+@media (max-width: 768px) {
+    .sidebar-resizer {
+        width: 16px; /* 移动设备上更宽的触摸区域 */
+        right: -8px;
+    }
+    
+    .sidebar-resizer::before {
+        font-size: 16px; /* 更大的指示器 */
+        content: '⣿'; /* 更明显的点阵字符 */
+    }
+    
+    .sidebar-resizer:hover::before,
+    .sidebar-resizer.active::before,
+    .sidebar-resizer:active::before {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 1;
+    }
+    
+    /* 添加触摸时的视觉反馈 */
+    .sidebar-resizer:active {
+        background-color: var(--primary-color);
+    }
+}
+
+/* 确保折叠状态时宽度变化平滑 */
+.sidebar.collapsed {
+    width: 0 !important; /* 使用!important确保折叠时宽度始终为0 */
+    padding: 0;
+    overflow: hidden;
+    transition: width 0.25s ease-in-out, padding 0.25s ease-in-out;
+} 

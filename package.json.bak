@@ -1,0 +1,71 @@
+{
+  "name": "smart-todo-list-project",
+  "version": "1.0.0",
+  "description": "A modern ToDo List application with Uni-app frontend and Node.js backend.",
+  "main": "main.js",
+  "scripts": {
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "dev:backend": "cd backend && npm run dev",
+    "start:backend": "cd backend && npm run start",
+    "dev": "echo \"Use 'npm run dev:frontend' and 'npm run dev:backend' in separate terminals.\"",
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "keywords": [
+    "todo",
+    "task management",
+    "uni-app",
+    "vue3",
+    "nodejs",
+    "express",
+    "electron"
+  ],
+  "author": "Your Name / Student Name",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^36.2.1",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.todoapp.electron",
+    "productName": "智能任务管理系统",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "images/app-icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "images/app-icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "images/app-icon.png"
+    },
+    "files": [
+      "**/*",
+      "!**/.vscode/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/.bin",
+      "!**/backend/{node_modules,dist}",
+      "!**/frontend/{node_modules,dist}",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!.editorconfig",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+    ]
+  }
+}

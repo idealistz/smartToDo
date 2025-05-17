@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能任务管理系统</title>
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/themes/light.css" id="theme-style">
+    <link rel="stylesheet" href="css/resizer.css">
+    <!-- 引入字体图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 自定义滚动条样式 -->
+    <style>
+      /* 滚动条淡入淡出属性定义 */
+      @keyframes fadeOutScrollbar {
+        0% { opacity: 1; width: 6px; }
+        70% { opacity: 0.3; width: 4px; }
+        100% { opacity: 0; width: 0; }
+      }
+      
+      @keyframes fadeInScrollbar {
+        0% { opacity: 0; width: 0; }
+        100% { opacity: 1; width: 6px; }
+      }
+      
+      /* 全局滚动条样式 */
+      ::-webkit-scrollbar {
+        width: 0; /* 默认不显示 */
+        height: 0;
+        opacity: 0;
+        transition: opacity 0.8s ease-out, width 0.8s ease-out; /* 更平滑的淡出效果 */
+      }
+      
+      /* 滚动条轨道 */
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      
+      /* 滚动条滑块 */
+      ::-webkit-scrollbar-thumb {
+        background-color: rgba(160, 160, 160, 0);
+        border-radius: 10px;
+        transition: background-color 0.8s ease-out; /* 更平滑的淡出效果 */
+      }
+      
+      /* 移除上下箭头按钮 */
+      ::-webkit-scrollbar-button {
+        display: none;
+        height: 0;
+        width: 0;
+      }
+      
+      /* 确保滚动平滑 */
+      * {
+        scroll-behavior: smooth;
+      }
+      
+      /* 添加自定义滚动条类 */
+      body.is-scrolling ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+        opacity: 1;
+        transition: opacity 0.2s ease-in, width 0.2s ease-in; /* 快速淡入 */
+        animation: fadeInScrollbar 0.2s ease-in forwards;
+      }
+      
+      /* 准备淡出的滚动条 */
+      body.scrollbar-fade-out ::-webkit-scrollbar {
+        animation: fadeOutScrollbar 0.8s ease-out forwards;
+      }
+      
+      body.is-scrolling ::-webkit-scrollbar-thumb {
+        background-color: rgba(160, 160, 160, 0.6);
+        transition: background-color 0.2s ease-in; /* 快速淡入 */
+      }
+      
+      /* 提供额外的视觉反馈：滚动中的滑块颜色稍深 */
+      body.is-actively-scrolling ::-webkit-scrollbar-thumb {
+        background-color: rgba(160, 160, 160, 0.8);
+      }
+      
+      /* 悬停时增强显示效果 */
+      body.is-scrolling ::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(160, 160, 160, 0.8);
+      }
+      
+      /* 暗色主题适配 */
+      body.dark-theme ::-webkit-scrollbar-thumb {
+        background-color: rgba(200, 200, 200, 0);
+      }
+      
+      body.dark-theme.is-scrolling ::-webkit-scrollbar-thumb {
+        background-color: rgba(200, 200, 200, 0.6);
+      }
+      
+      body.dark-theme.is-actively-scrolling ::-webkit-scrollbar-thumb {
+        background-color: rgba(200, 200, 200, 0.8);
+      }
+      
+      body.dark-theme.is-scrolling ::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(200, 200, 200, 0.8);
+      }
+    </style>
+    <!-- 滚动条修复 -->
+    <style>
+      /* 修复双滚动条问题 */
+      .main-content {
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+      }
+      
+      .quadrant-container {
+        overflow: visible !important;
+      }
+      
+      .quadrant {
+        overflow: visible !important;
+      }
+      
+      .quadrant-task-list {
+        overflow-y: visible !important;
+        max-height: none !important;
+      }
+
+      .quadrant-grid {
+        height: auto !important;
+        max-height: none !important;
+      }
+      
+      /* 移除HTML滚动条 */
+      html {
+        overflow-y: hidden !important;
+      }
+      
+      /* 确保容器的滚动位置独立 */
+      #today-container, 
+      #quadrant-container {
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        overscroll-behavior: contain; /* 防止滚动传递 */
+      }
+      
+      /* 防止滚动记忆 */
+      .task-list, 
+      .quadrant-task-list,
+      .sidebar,
+      .main-content {
+        overscroll-behavior: contain; /* 防止滚动传递 */
+        scroll-behavior: auto; /* 防止使用全局scroll-behavior */
+      }
+      
+      /* 不可见容器不应该影响滚动位置 */
+      [style*="display: none"] {
+        scroll-behavior: unset !important;
+        overflow: hidden !important;
+      }
+    </style>
+    <!-- 标签样式改进 -->
+    <style>
+      /* 输入框中的标签样式 */
+      .tags-container {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-right: 5px;
+      }
+      
+      .tags-in-input {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 12px;
+        background-color: var(--primary-light);
+        color: var(--primary-color);
+        font-size: 12px;
+        font-weight: 500;
+        margin-right: 4px;
+        transition: all 0.2s ease;
+        max-width: 150px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      .tags-in-input:hover {
+        background-color: rgba(var(--primary-color-rgb), 0.2);
+      }
+      
+      .tag-remove {
+        margin-left: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+      }
+      
+      .tag-remove:hover {
+        background-color: var(--primary-color);
+        color: white;
+      }
+      
+      /* 标签选项样式 */
+      .tag-option.selected {
+        background-color: var(--primary-light);
+        color: var(--primary-color);
+        font-weight: 500;
+      }
+      
+      .tag-option.selected::after {
+        content: "✓";
+        position: absolute;
+        right: 12px;
+        color: var(--primary-color);
+      }
+      
+      /* 美化选项卡导航样式 */
+      .app-container {
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+        width: 100%;
+      }
+      
+      .tab-navigation {
+        width: 60px;
+        background-color: var(--sidebar-bg);
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 15px;
+        transition: background-color var(--transition-speed);
+        position: relative;
+        z-index: 10;
+      }
+      
+      .tab-item {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        border-radius: 10px;
+        cursor: pointer;
+        color: var(--text-light);
+        transition: all 0.3s ease;
+        position: relative;
+      }
+      
+      .tab-item:hover {
+        background-color: var(--hover-bg);
+        color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      }
+      
+      .tab-item.active {
+        background-color: var(--active-bg);
+        color: var(--primary-color);
+        transform: scale(1.05);
+      }
+      
+      .tab-icon {
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      /* 新增四象限小图标样式 */
+      .quadrant-mini-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 2px;
+        width: 20px;
+        height: 20px;
+      }
+      
+      .q1-mini, .q2-mini, .q3-mini, .q4-mini {
+        border-radius: 2px;
+      }
+      
+      .q1-mini {
+        background-color: var(--q1-color);
+      }
+      
+      .q2-mini {
+        background-color: var(--q2-color);
+      }
+      
+      .q3-mini {
+        background-color: var(--q3-color);
+      }
+      
+      .q4-mini {
+        background-color: var(--q4-color);
+      }
+      
+      /* 添加提示框样式 */
+      .tab-tooltip {
+        position: absolute;
+        left: 60px;
+        background-color: var(--panel-bg);
+        color: var(--text-color);
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 14px;
+        box-shadow: var(--shadow-md);
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: all 0.3s ease;
+        z-index: 1000;
+      }
+      
+      .tab-item:hover .tab-tooltip {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      
+      /* 修改原有侧边栏样式 */
+      .sidebar {
+        width: 200px;
+        transition: all 0.3s ease;
+      }
+      
+      .sidebar.collapsed {
+        width: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      
+      /* 添加页面初始化动画 */
+      body {
+        opacity: 0;
+        animation: fadeInPage 0.6s ease-in-out forwards;
+      }
+      
+      @keyframes fadeInPage {
+        0% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+      
+      /* 初始隐藏所有容器，避免闪烁 */
+      #today-container, #quadrant-container {
+        opacity: 0;
+      }
+      
+      /* 防止动画过程中出现滚动条跳动 */
+      html {
+        overflow-y: scroll;
+      }
+      
+      /* 确保所有过渡效果平滑 */
+      * {
+        transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      }
+      
+
+    </style>
+  </head>
+  <body>
+    <div class="app-container" style="display: none;">
+      <!-- 新增最左侧选项卡导航 -->
+      <div class="tab-navigation">
+        <div class="tab-item active" data-tab="tasks">
+          <div class="tab-icon">
+            <i class="fas fa-tasks"></i>
+          </div>
+          <div class="tab-tooltip">任务</div>
+        </div>
+        <div class="tab-item" data-tab="quadrant">
+          <div class="tab-icon">
+            <div class="quadrant-mini-grid">
+              <div class="q1-mini"></div>
+              <div class="q2-mini"></div>
+              <div class="q3-mini"></div>
+              <div class="q4-mini"></div>
+            </div>
+          </div>
+          <div class="tab-tooltip">四象限</div>
+        </div>
+        <div class="tab-item" data-tab="quick-search">
+          <div class="tab-icon">
+            <i class="fas fa-search"></i>
+          </div>
+          <div class="tab-tooltip">快速搜索 (Ctrl+K)</div>
+        </div>
+        <!-- 添加到 .tab-navigation 底部 -->
+        <div class="tab-user-profile-container">
+            <img id="tab-nav-user-avatar" class="user-avatar" src="images/default-avatar.png" alt="用户头像" title="用户选项">
+            <div id="user-actions-popup" class="user-actions-popup">
+                <div class="popup-action-item" id="popup-edit-profile">
+                    <i class="fas fa-user-edit"></i> 编辑个人资料
+                </div>
+                <div class="popup-action-item" id="popup-logout">
+                    <i class="fas fa-sign-out-alt"></i> 登出
+                </div>
+            </div>
+        </div>
+      </div>
+    
+      <!-- 左侧导航栏 -->
+      <div class="sidebar" id="tasks-sidebar">
+          <ul class="menu-list">
+              <li class="menu-item active" data-section="today">
+                  <div class="menu-icon square">
+                      <i class="fas fa-check"></i>
+                  </div>
+                  <span>今天</span>
+                  <span class="count">0</span>
+              </li>
+              <li class="menu-item" data-section="tags-manager">
+                <div class="menu-icon square">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <span>标签</span>
+                <span class="count"></span> 
+              </li>
+              <li class="menu-item" data-section="inbox">
+                  <div class="menu-icon square">
+                      <i class="fas fa-inbox"></i>
+                  </div>
+                  <span>收集箱</span>
+              </li>
+              
+              
+              <li class="menu-item" data-section="completed">
+                  <div class="menu-icon square">
+                      <i class="fas fa-check"></i>
+                  </div>
+                  <span>已完成</span>
+                  <span class="count">0</span>
+              </li>
+              <li class="menu-item" data-section="trash">
+                  <div class="menu-icon square">
+                      <i class="fas fa-trash"></i>
+                  </div>
+                  <span>垃圾桶</span>
+                  <span class="count">0</span>
+              </li>
+          </ul>
+          
+          <!-- 用户个人资料组件 -->
+          <!-- 
+          <div class="user-profile">
+              <div class="user-avatar-container">
+                  <img src="images/default-avatar.png" alt="用户头像" id="user-avatar" class="user-avatar">
+              </div>
+              <div class="user-info">
+                  <div class="username" id="display-username">未登录</div>
+                  <div class="user-actions">
+                      <button id="edit-profile-btn" class="profile-btn" title="编辑个人资料">
+                          <i class="fas fa-user-edit"></i>
+                      </button>
+                      <button id="logout-btn" class="profile-btn" title="注销">
+                          <i class="fas fa-sign-out-alt"></i>
+                      </button>
+                  </div>
+              </div>
+          </div>
+           -->
+          
+          <div class="sidebar-resizer" id="tasks-sidebar-resizer"></div>
+      </div>
+      
+      <!-- 四象限侧边栏 - 初始隐藏 -->
+     
+    
+      <!-- 主内容区 -->
+      <div class="main-content">
+          <!-- 今天页面 -->
+          <div id="today-container">
+              <div class="content-header">
+                  <h1 class="page-title">今天</h1>
+                  <div class="view-options">
+                      <button class="theme-toggle" id="themeToggle" title="切换主题">
+                          <i class="fas fa-moon"></i>
+                      </button>
+                  </div>
+              </div>
+       
+              <!-- 任务排序选项 -->
+              <div class="filter-options">
+                  <div class="filter-group">
+                      <span class="filter-label">排序：</span>
+                      <button class="sort-btn active" data-sort="date">按日期</button>
+                      <button class="sort-btn" data-sort="priority">按优先级</button>
+                  </div>
+              </div>
+              
+              <!-- 添加任务输入框增强版 -->
+              <div class="task-input-container">
+                  <div class="task-input-box">
+                      <div class="icons-container">
+                          <div class="icon add-icon">
+                              <i class="fas fa-plus"></i>
+                          </div>
+                      </div>
+                      <input type="text" class="task-input" placeholder="添加任务">
+                      <div class="task-options">
+                          <div class="task-priority-selector" title="设置优先级">
+                              <i class="fas fa-flag"></i>
+                              <span class="priority-text"></span>
+                              <div class="priority-dropdown">
+                                  <div class="priority-option" data-priority="high">
+                                      <i class="fas fa-flag" style="color: var(--q1-color);"></i>
+                                      <span>高</span>
+                                  </div>
+                                  <div class="priority-option" data-priority="medium">
+                                      <i class="fas fa-flag" style="color: var(--q3-color);"></i>
+                                      <span>中</span>
+                                  </div>
+                                  <div class="priority-option" data-priority="low">
+                                      <i class="fas fa-flag" style="color: var(--q4-color);"></i>
+                                      <span>低</span>
+                                  </div>
+                                  <div class="priority-option" data-priority="none">
+                                      <i class="fas fa-times"></i>
+                                      <span>无优先级</span>
+                                  </div>
+                              </div>
+                          </div>
+                          <div class="task-tag-selector" title="添加标签">
+                              <i class="fas fa-tag"></i>
+                              <span class="tag-text"></span>
+                              <div class="tag-dropdown">
+                                  <div class="tag-search-container">
+                                      <input type="text" class="tag-search" placeholder="输入标签">
+                                  </div>
+                                  <div class="tag-list">
+                                      <div class="tag-option" data-tag="工作">工作</div>
+                                      <div class="tag-option" data-tag="学习">学习</div>
+                                      <div class="tag-option" data-tag="个人">个人</div>
+                                  </div>
+                              </div>
+                          </div>
+                          <div class="task-option task-date-selector" title="日期与提醒">
+                              <i class="fa-regular fa-calendar"></i>
+                              <span class="date-text"></span>
+                              <div class="date-dropdown">
+                                  <div class="date-preset-option" data-value="今天">
+                                      <i class="fa-regular fa-calendar-check"></i>
+                                      <span>今天</span>
+                                  </div>
+                                  <div class="date-preset-option" data-value="明天">
+                                      <i class="fa-regular fa-calendar-day"></i>
+                                      <span>明天</span>
+                                  </div>
+                                  <div class="date-preset-option" data-value="下周">
+                                      <i class="fa-regular fa-calendar-week"></i>
+                                      <span>下周</span>
+                                  </div>
+                                  <span class="custom-date-input-hint">点击下方输入区域或日历图标选择日期</span>
+                                  <input type="date" class="custom-date-input">
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              
+              <!-- 在已过期任务区域之后添加新的今天任务区域 -->
+              <div class="task-section">
+                  <div class="section-header">
+                      <h2 class="section-title">
+                          <button class="collapse-btn">
+                              <i class="fas fa-chevron-down"></i>
+                          </button>
+                          已过期
+                          <span class="section-count">0</span>
+                      </h2>
+                      <span class="section-action">顺延</span>
+                  </div>
+                  
+                  <ul class="task-list">
+                      <!-- 初始为空 -->
+                  </ul>
+              </div>
+              
+              <!-- 新添加的今天任务区域 -->
+              <div class="task-section">
+                  <div class="section-header">
+                      <h2 class="section-title">
+                          <button class="collapse-btn">
+                              <i class="fas fa-chevron-down"></i>
+                          </button>
+                          今天
+                          <span class="section-count">0</span>
+                      </h2>
+                  </div>
+                  
+                  <ul class="task-list">
+                      <!-- 初始为空 -->
+                  </ul>
+              </div>
+              
+              <!-- 无截止日期任务区域 -->
+              <div class="task-section">
+                  <div class="section-header">
+                      <h2 class="section-title">
+                          <button class="collapse-btn">
+                              <i class="fas fa-chevron-down"></i>
+                          </button>
+                          无DDL
+                          <span class="section-count">0</span>
+                      </h2>
+                  </div>
+                  
+                  <ul class="task-list no-deadline-list">
+                      <!-- 初始为空 -->
+                  </ul>
+              </div>
+              
+
+          </div>
+          <div id="tags-manager-container" class="task-section-container" style="display: none;">
+            <div class="section-header">
+                <h2 class="section-title">标签管理</h2>
+                <span id="tag-manager-message" class="tag-manager-message"></span>
+                <!-- 可选：未来可在此处添加"新建标签"按钮等全局操作 -->
+            </div>
+            <div class="add-tag-container">
+                <input type="text" id="new-tag-input" placeholder="输入新标签名称...">
+                <button id="add-tag-btn" class="simple-button primary-button">添加标签</button>
+            </div>
+            <h3 id="tags-by-tag-title" class="tag-manager-instruction">点击标签查看相关任务，使用右侧按钮可重命名或删除标签</h3>
+            <div class="tags-manager-layout">
+                <div class="all-tags-panel">
+                    <h3>所有标签</h3>
+                    <ul id="all-tags-list">
+                        <!-- 标签列表由JS动态填充 -->
+                    </ul>
+                </div>
+                <div class="tasks-by-tag-panel">
+                    <h3 id="tasks-by-tag-title">选择一个标签以查看任务</h3>
+                    <ul id="tasks-for-selected-tag-list" class="task-list">
+                        <!-- 任务将通过JS动态填充 -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+          <!-- 已完成页面 -->
+          <div id="completed-container" style="display: none;">
+              <div class="content-header">
+                  <h1 class="page-title">已完成</h1>
+                  <div class="view-options">
+                      <div class="search-container">
+                          <input type="text" id="completed-search" placeholder="搜索已完成任务..." class="search-input">
+                          <i class="fas fa-search search-icon"></i>
+                      </div>
+                      <button class="theme-toggle" id="themeToggleCompleted" title="切换主题">
+                          <i class="fas fa-moon"></i>
+                      </button>
+                  </div>
+              </div>
+              
+              <!-- 已完成任务筛选选项 -->
+              <div class="filter-options">
+                  <div class="filter-group">
+                      <span class="filter-label">筛选：</span>
+                      <button class="filter-btn completed-filter active" data-filter="all">所有</button>
+                      <button class="filter-btn completed-filter" data-filter="today">今天</button>
+                      <button class="filter-btn completed-filter" data-filter="week">本周</button>
+                      <button class="filter-btn completed-filter" data-filter="month">本月</button>
+                  </div>
+                  <div class="filter-group">
+                      <span class="filter-label">排序：</span>
+                      <button class="sort-btn completed-sort active" data-sort="date">完成日期</button>
+                      <button class="sort-btn completed-sort" data-sort="priority">优先级</button>
+                  </div>
+              </div>
+              
+              <!-- 已完成任务列表 -->
+              <div class="task-section">
+                  <div class="section-header">
+                      <h2 class="section-title">
+                          <button class="collapse-btn">
+                              <i class="fas fa-chevron-down"></i>
+                          </button>
+                          已完成任务
+                          <span class="section-count">0</span>
+                      </h2>
+                      <button id="clear-completed" class="button secondary-button empty-trash-button" style="margin-left: auto;" title="清空已完成">
+                          <i class="fas fa-trash-alt"></i>
+                          <span class="button-text">清空</span>
+                      </button>
+                  </div>
+                  
+                  <ul class="task-list" id="completed-task-list">
+                      <!-- 已完成任务将在这里显示 -->
+                  </ul>
+              </div>
+              
+              <!-- 完成统计 -->
+              <div class="completion-stats">
+                  <div class="stats-item">
+                      <span class="stats-label">今日完成</span>
+                      <span class="stats-value" id="today-completed-count">0</span>
+                  </div>
+                  <div class="stats-item">
+                      <span class="stats-label">本周完成</span>
+                      <span class="stats-value" id="week-completed-count">0</span>
+                  </div>
+                  <div class="stats-item">
+                      <span class="stats-label">本月完成</span>
+                      <span class="stats-value" id="month-completed-count">0</span>
+                  </div>
+                  <div class="stats-item">
+                      <span class="stats-label">总计完成</span>
+                      <span class="stats-value" id="total-completed-count">0</span>
+                  </div>
+              </div>
+          </div>
+
+          <!-- 收集箱容器 (新的想法盒子) -->
+          <section id="inbox-container" class="main-content-section" style="display: none;">
+              <div class="section-header">
+                  <h2 class="section-title">想法盒子</h2>
+                  <span class="section-count">0</span> <!-- 这个计数由 updateTaskCount 更新 -->
+              </div>
+              <div class="add-idea-container">
+                  <input type="text" id="new-idea-input" class="task-input" placeholder="记录一个新想法...">
+                  <button id="add-idea-btn" class="btn primary-btn">添加想法</button>
+              </div>
+              <div id="ideas-list-container" class="task-list">
+
+              </div>
+          </section>
+
+          <!-- 垃圾桶容器 -->
+          <section id="trash-container" class="main-content-section" style="display: none;">
+              <div class="content-header">
+                  <h1 class="page-title">垃圾桶</h1>
+                  <!-- 可选：添加清空按钮 -->
+                  <button id="empty-trash-btn" class="button secondary-button empty-trash-button" style="margin-left: auto;" title="清空垃圾桶">
+                      <i class="fas fa-trash-alt"></i>
+                      <span class="button-text">清空垃圾桶</span>
+                  </button>
+              </div>
+              <ul class="task-list" id="trash-list">
+                  <!-- 已删除任务将在这里渲染 -->
+              </ul>
+          </section>
+          
+
+
+          <!-- 四象限页面 -->
+          <div id="quadrant-container" class="quadrant-container">
+              <div class="content-header">
+                  <h1 class="page-title">四象限任务管理</h1>
+                  <div class="view-options">
+                      <button class="theme-toggle" id="themeToggleQuadrant" title="切换主题">
+                          <i class="fas fa-moon"></i>
+                      </button>
+                  </div>
+              </div>
+
+              <div class="quadrant-description">
+                  四象限法则（艾森豪威尔矩阵）可以帮助您合理安排任务优先级。将任务按照重要性和紧急性分为四类，更高效地管理时间。
+              </div>
+              
+              <div class="quadrant-grid">
+                  <!-- 象限一：重要且紧急 -->
+                  <div class="quadrant q1">
+                      <div class="quadrant-title">
+                          <div class="roman-numeral">I</div>
+                          <span>重要且紧急</span>
+                      </div>
+                      <ul class="quadrant-task-list">
+                          <!-- 已删除示例任务，初始为空 -->
+                      </ul>
+                      <div class="quadrant-add-task">
+                          <i class="fas fa-plus"></i>
+                          <span>添加任务</span>
+                      </div>
+                  </div>
+                  
+                  <!-- 象限二：重要不紧急 -->
+                  <div class="quadrant q2">
+                      <div class="quadrant-title">
+                          <div class="roman-numeral">II</div>
+                          <span>重要不紧急</span>
+                      </div>
+                      <ul class="quadrant-task-list">
+                          <!-- 已删除示例任务，初始为空 -->
+                      </ul>
+                      <div class="quadrant-add-task">
+                          <i class="fas fa-plus"></i>
+                          <span>添加任务</span>
+                      </div>
+                  </div>
+                  
+                  <!-- 象限三：不重要但紧急 -->
+                  <div class="quadrant q3">
+                      <div class="quadrant-title">
+                          <div class="roman-numeral">III</div>
+                          <span>不重要但紧急</span>
+                      </div>
+                      <ul class="quadrant-task-list">
+                          <!-- 已删除示例任务，初始为空 -->
+                      </ul>
+                      <div class="quadrant-add-task">
+                          <i class="fas fa-plus"></i>
+                          <span>添加任务</span>
+                      </div>
+                  </div>
+                  
+                  <!-- 象限四：不重要不紧急 -->
+                  <div class="quadrant q4">
+                      <div class="quadrant-title">
+                          <div class="roman-numeral">IV</div>
+                          <span>不重要不紧急</span>
+                      </div>
+                      <ul class="quadrant-task-list">
+                          <!-- 已删除示例任务，初始为空 -->
+                      </ul>
+                      <div class="quadrant-add-task">
+                          <i class="fas fa-plus"></i>
+                          <span>添加任务</span>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+    </div>
+
+    <!-- Dependencies FIRST -->
+    <!-- apiService.js已被移除，改为使用本地存储 -->
+
+    <!-- Then Components & Managers -->
+    <!-- <script src="js/components/themeSwitcher.js"></script> -->
+    <script src="js/components/theme.js"></script>
+    <script src="js/components/authManager.js"></script>
+    <!-- <script src="js/components/sidebarResizer.js"></script> -->
+    <!-- <script src="js/components/modalManager.js"></script> -->
+    <!-- <script src="js/utils/helpers.js"></script> -->
+    <!-- localStorageManager.js is removed/not used based on previous findings -->
+    <script src="js/components/dateSelector.js"></script>
+    <!-- <script src="js/components/tagManager.js"></script> -->
+    <script src="js/components/taskManager.js"></script>
+    <script src="js/components/quadrantManager.js"></script>
+    <!-- <script src="js/ideaManager.js"></script> -->
+    <!-- <script src="js/components/confirmModal.js"></script> -->
+    <script src="js/components/quickSearch.js"></script>
+    <!-- init.js is removed/not used based on previous findings -->
+    <script src="js/components/quickCapture.js"></script>
+    <!-- <script src="js/components/taskEditor.js"></script> --> <!-- REMOVED: Task editor logic is in taskManager.js -->
+
+    <!-- Inline scripts that might depend on the above -->
+    <!-- Options Tab Switching Script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // 获取选项卡元素
+        const tabItems = document.querySelectorAll('.tab-item');
+        const sidebars = {
+          tasks: document.getElementById('tasks-sidebar'),
+          quadrant: document.getElementById('quadrant-sidebar')
+          // 注意：如果还有其他独立的顶级侧边栏，也应在此处定义
+        };
+        const containers = {
+          // "tasks" 键仍然可以指向 today-container 作为 "tasks" 选项卡下的一个主要或默认视图。
+          // 当 "tasks" 选项卡激活时，具体显示哪个子视图 (today, inbox, completed, trash)
+          // 是由 taskManager.js 中的 setupSidebarMenuItems 进一步控制的。
+          tasks: document.getElementById('today-container'),       // 代表 "tasks" tab 下的默认或主要视图
+          inbox: document.getElementById('inbox-container'),       // 收集箱/想法盒子
+          completed: document.getElementById('completed-container'), // 已完成视图
+          trash: document.getElementById('trash-container'),         // 垃圾桶视图
+          quadrant: document.getElementById('quadrant-container'),  // 四象限视图
+          tagsManager: document.getElementById('tags-manager-container')  // 标签管理器视图
+        };
+        
+        // 从本地存储中恢复上次的活跃选项卡
+        const lastActiveTab = localStorage.getItem('activeTab') || 'tasks';
+        
+        // 获取保存的侧边栏宽度 (确保 window.currentSidebarWidth 在其他地方被正确设置或从localStorage读取)
+        const savedWidth = window.currentSidebarWidth || parseInt(localStorage.getItem('sidebarWidth')) || 240;
+        
+        // 全局滚动容器重置函数
+        function resetAllScrollPositions() {
+          const mainContent = document.querySelector('.main-content');
+          if (mainContent) mainContent.scrollTop = 0;
+          
+          Object.values(containers).forEach(container => {
+            if (container && typeof container.scrollTop === 'number') container.scrollTop = 0;
+          });
+          
+          Object.values(sidebars).forEach(sidebar => {
+            if (sidebar && typeof sidebar.scrollTop === 'number') sidebar.scrollTop = 0;
+          });
+          
+          document.querySelectorAll('.task-list, .quadrant-task-list, .ideas-list-container, #completed-task-list, #trash-list').forEach(list => {
+            if (list && typeof list.scrollTop === 'number') list.scrollTop = 0;
+          });
+        }
+        
+        // 切换选项卡函数
+        function switchTab(tabId) {
+          localStorage.setItem('activeTab', tabId);
+          
+          tabItems.forEach(tab => tab.classList.remove('active'));
+          const activeTabElement = document.querySelector(`.tab-item[data-tab="${tabId}"]`);
+          if (activeTabElement) activeTabElement.classList.add('active');
+    
+          resetAllScrollPositions();
+    
+          // 1. 首先隐藏所有已知的顶级容器
+          Object.values(containers).forEach(container => {
+            if (container) container.style.display = 'none';
+          });
+    
+          // 2. 根据 tabId 显示对应的容器和侧边栏
+          if (tabId === 'quadrant') {
+            if (sidebars.tasks && sidebars.tasks.classList) sidebars.tasks.classList.add('collapsed');
+            if (sidebars.quadrant && sidebars.quadrant.classList) sidebars.quadrant.classList.remove('collapsed'); // 如果四象限有自己的侧边栏
+            
+            if (containers.quadrant) containers.quadrant.style.display = 'flex'; // 使用 flex
+            
+            if (window.refreshQuadrantTasks && typeof window.refreshQuadrantTasks === 'function') {
+                refreshQuadrantTasks();
+            }
+
+          } else if (tabId === 'tasks') {
+            if (sidebars.quadrant && sidebars.quadrant.classList) sidebars.quadrant.classList.add('collapsed');
+            if (sidebars.tasks && sidebars.tasks.classList) sidebars.tasks.classList.remove('collapsed');
+            
+            // 显示任务相关元素（筛选选项和任务输入框）
+            const taskFilterOptions = document.querySelectorAll('.filter-options');
+            taskFilterOptions.forEach(filterOptions => {
+                filterOptions.style.display = 'flex';
+            });
+            
+            const taskInputContainers = document.querySelectorAll('.task-input-container');
+            taskInputContainers.forEach(inputContainer => {
+                inputContainer.style.display = 'block';
+            });
+    
+            // 当 "tasks" 选项卡激活时，具体显示哪个子视图 (今天, 收集箱等)
+            // 由 taskManager.js 通过模拟点击相应的 .menu-item 来决定。
+            // 尝试找到当前激活的或默认的 menu-item 并点击它。
+            const activeTaskMenuItem = document.querySelector('#tasks-sidebar .menu-item.active') || 
+                                       document.querySelector('#tasks-sidebar .menu-item[data-section="today"]'); // 默认到 "今天"
+            
+            if (activeTaskMenuItem && typeof activeTaskMenuItem.click === 'function') {
+                activeTaskMenuItem.click(); // 这会触发 taskManager.js 中的 setupSidebarMenuItems
+                console.log('任务标签页激活，已点击侧边栏菜单项：', activeTaskMenuItem.dataset.section);
+            } else if (containers.tasks) { 
+                // Fallback: 如果没有 menu-item 可点击 (理论上不应发生), 
+                // 至少显示 "tasks" tab 关联的主容器 (today-container)。
+                containers.tasks.style.display = 'block';
+                console.warn('未能找到活动的任务菜单项，将显示默认今天容器');
+            }
+            // 注意: inbox-container, completed-container, trash-container 的显隐
+            // 完全由 taskManager.js -> setupSidebarMenuItems 控制。
+            // switchTab('tasks') 的职责是确保 "tasks" 这个大分类被激活。
+          }
+          // 如果有其他 tabId (例如 'quick-search'), 它们可能有自己的处理逻辑，
+          // 通常是模态框，不直接影响这些主容器的 display。
+    
+          if (window.updateAllSidebarsWidth && typeof window.updateAllSidebarsWidth === 'function') {
+            window.updateAllSidebarsWidth(savedWidth); // 应用保存的或当前宽度
+          }
+          window.dispatchEvent(new Event('resize')); // 触发resize以适应布局变化
+        }
+        
+        // 为每个选项卡添加点击事件
+        tabItems.forEach(tab => {
+          // 对 quick-search tab 特殊处理，它不应该触发通用的 switchTab 逻辑
+          if (tab.dataset.tab === 'quick-search') {
+              tab.addEventListener('click', function(e) {
+                  e.preventDefault(); // quick-search 通常是打开一个模态框
+                  // 具体的快速搜索显示逻辑应该在 quickSearch.js 或其初始化的地方处理
+                  if (window.QuickSearch && typeof window.QuickSearch.show === 'function') {
+                      window.QuickSearch.show();
+                  }
+              });
+          } else {
+              tab.addEventListener('click', function() {
+                  const tabId = this.getAttribute('data-tab');
+                  switchTab(tabId);
+              });
+          }
+        });
+        
+        // 初始显示上次活跃的选项卡或默认为任务选项卡
+        // 确保 quick-search 不是初始 tab
+        const initialTab = (lastActiveTab && lastActiveTab !== 'quick-search') ? lastActiveTab : 'tasks';
+        switchTab(initialTab);
+        
+        // 添加CSS样式 (可以保留或根据需要调整)
+        const style = document.createElement('style');
+        style.textContent = `
+          .tab-item {
+            transition: color 0.2s ease, background-color 0.2s ease;
+          }
+          .tab-item.active {
+            transition: color 0.2s ease, background-color 0.2s ease;
+          }
+          #today-container, #inbox-container, #completed-container, #trash-container, #quadrant-container, #tags-manager-container {
+            opacity: 1;
+            transition: none; /* 移除可能导致闪烁的 opacity 过渡 */
+          }
+        `;
+        document.head.appendChild(style);
+      });
+    </script>
+    
+    <!-- Login Check Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 从本地存储检查登录状态
+            const token = localStorage.getItem('accessToken');
+            const currentUser = localStorage.getItem('currentUser');
+
+            if (!token || !currentUser) {
+                console.log('No login info found, redirecting to login page.');
+                window.location.href = 'login.html';
+            } else {
+                // 用户已登录，显示应用容器
+                console.log('Login info found. Showing app container and proceeding with initialization.');
+                const appContainer = document.querySelector('.app-container');
+                if (appContainer) {
+                    appContainer.style.display = 'flex'; 
+                } else {
+                    console.error('App container (.app-container) not found!');
+                }
+
+                // 可以在这里显示用户信息，例如在顶部导航栏显示用户名
+                try {
+                    const userInfo = JSON.parse(currentUser);
+                    const usernameElement = document.getElementById('display-username');
+                    if (usernameElement && userInfo.username) {
+                        usernameElement.textContent = userInfo.username;
+                    }
+                } catch (e) {
+                    console.error('Error parsing user info:', e);
+                }
+            }
+
+            // 登出按钮逻辑
+            const logoutButton = document.getElementById('popup-logout');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    // 清除登录信息
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('currentUser');
+                        console.log('User logged out. Redirecting to login page.');
+                        window.location.href = 'login.html';
+                });
+            } else {
+                console.warn('Logout button not found.');
+            }
+        });
+    </script>
+
+<!-- Task Editor Modal -->
+<div id="task-editor-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-content task-editor">
+      <button id="task-editor-close-btn" class="modal-close-btn">&times;</button>
+      <h2 id="task-editor-title">编辑任务</h2>
+      <input type="hidden" id="task-editor-task-id">
+      <div class="input-group">
+          <label for="task-editor-text">任务内容:</label>
+          <input type="text" id="task-editor-text" placeholder="输入任务内容..." required>
+      </div>
+      <div class="input-group">
+          <label for="task-editor-due-date">截止日期:</label>
+          <input type="date" id="task-editor-due-date">
+      </div>
+      <!-- Removed Priority and Tags input as they are handled via context menu now -->
+      <div class="modal-actions">
+          <button id="task-editor-cancel-btn" class="button secondary-button">取消</button>
+          <button id="task-editor-save-btn" class="button primary-button">保存更改</button>
+      </div>
+  </div>
+</div>
+
+<!-- 用户个人资料编辑模态框 -->
+<div id="user-profile-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-content user-profile-editor">
+    <button id="user-profile-close-btn" class="modal-close-btn" title="关闭">
+      <i class="fas fa-times"></i>
+    </button>
+    <h2 id="user-profile-title">个人资料</h2>
+    
+    <div class="profile-avatar-section">
+      <div class="avatar-preview-container">
+        <img id="avatar-preview" src="images/default-avatar.png" alt="头像预览" class="avatar-preview">
+      </div>
+      <div class="avatar-upload-controls">
+        <label for="avatar-upload" class="avatar-upload-label">
+          <i class="fas fa-camera"></i> 
+          <span>更换头像</span>
+        </label>
+        <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
+      </div>
+    </div>
+    
+    <div class="input-group">
+      <label for="profile-username">用户名</label>
+      <input type="text" id="profile-username" disabled>
+    </div>
+    
+    <div class="modal-actions">
+      <button id="user-profile-cancel-btn" class="button secondary-button">取消</button>
+      <button id="user-profile-save-btn" class="button primary-button">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 删除子任务确认模态框 -->
+<div class="confirm-modal-overlay" id="delete-subtask-confirm-modal" style="display: none;">
+    <div class="confirm-modal">
+        <div class="confirm-modal-header">
+            <h3 class="confirm-modal-title" id="confirm-modal-title-subtask">确认删除子任务</h3>
+            <button class="confirm-modal-close" id="confirm-modal-close-btn-subtask">&times;</button>
+        </div>
+        <div class="confirm-modal-message" id="confirm-modal-message-subtask">
+            确定要删除这个子任务吗？此操作无法撤销。
+        </div>
+        <div class="confirm-modal-buttons">
+            <button class="button secondary-button" id="confirm-modal-cancel-btn-subtask">取消</button>
+            <button class="button primary-button" id="confirm-modal-confirm-btn-subtask">确认删除</button>
+        </div>
+    </div>
+</div>
+
+<!-- 通用任务/想法等操作确认模态框 (原为删除想法确认模态框) -->
+<div class="confirm-modal-overlay" id="generic-task-confirm-modal" style="display: none;">
+    <div class="confirm-modal">
+        <div class="confirm-modal-header">
+            <h3 class="confirm-modal-title" id="generic-confirm-modal-title">确认操作</h3>
+            <button class="confirm-modal-close" id="generic-confirm-modal-close-btn">&times;</button>
+        </div>
+        <div class="confirm-modal-message" id="generic-confirm-modal-message">
+            确定要执行此操作吗？
+        </div>
+        <div class="confirm-modal-buttons">
+            <button class="button secondary-button" id="generic-confirm-modal-cancel-btn">取消</button>
+            <button class="button primary-button" id="generic-confirm-modal-confirm-btn">确认</button>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- 脚本引用 -->
+<script src="js/app.js"></script>
+  </body>
+</html>
