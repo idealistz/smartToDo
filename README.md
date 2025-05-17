@@ -3,6 +3,12 @@
 <div align="center">
   <p>一个使用 HTML, CSS, JavaScript 和 Electron 构建的智能任务管理系统</p>
   <p><strong>✅ 桌面应用版本已成功构建</strong></p>
+  
+  <p>
+    <a href="https://github.com/idealistz/smartToDo"><img src="https://img.shields.io/badge/GitHub-仓库-blue?style=flat-square&logo=github" alt="GitHub仓库"></a>
+    <img src="https://img.shields.io/badge/版本-1.0.0-success?style=flat-square" alt="版本">
+    <img src="https://img.shields.io/badge/许可证-MIT-green?style=flat-square" alt="许可证">
+  </p>
 </div>
 
 ## 📝 项目概述
@@ -99,39 +105,49 @@ project-root/
 
 ## 🚀 如何开始
 
-### 作为网页应用运行
-1. **获取代码**：克隆或下载项目到本地
-   ```
-   git clone [项目仓库URL]
-   cd [项目目录]
-   ```
+### 获取代码
 
-2. **直接运行**：
+```bash
+# 克隆仓库
+git clone https://github.com/idealistz/smartToDo.git
+
+# 进入项目目录
+cd smartToDo
+```
+
+### 作为网页应用运行
+
+1. **直接在浏览器打开**：
    - 在现代浏览器中打开 `index.html` 文件即可使用应用
    - 也可以打开 `login.html` 或 `register.html` 体验用户认证功能
 
-3. **使用HTTP服务器**（可选但推荐）：
-   - 使用任何HTTP服务器提供静态文件服务
-   - 例如使用Node.js的http-server:
-     ```
-     npm install -g http-server
-     http-server . -p 8080
-     ```
+2. **使用HTTP服务器**（可选但推荐）：
+   ```bash
+   # 安装http-server (如果尚未安装)
+   npm install -g http-server
+   
+   # 启动HTTP服务器
+   http-server . -p 8080
+   ```
    - 然后访问 http://localhost:8080
 
 ### 作为桌面应用运行 ✅
+
 1. **安装依赖**：
-   ```
+   ```bash
+   # 安装项目依赖
    npm install
    ```
 
 2. **开发模式运行**：
-   ```
+   ```bash
+   # 以开发模式运行应用
    npm run dev:electron
    ```
 
 3. **构建桌面应用**：
-   ```
+   ```bash
+   # 打包应用为可分发版本
    npm run dist
    ```
    完成后，可在 `build` 目录找到对应平台的安装程序。
@@ -142,7 +158,7 @@ project-root/
    - 应用支持最小化到系统托盘
 
 ## 📱 支持平台
- 
+
 - **网页版**：Chrome、Firefox、Safari、Edge等现代浏览器
 - **桌面版**：
   - ✅ Windows 10/11（已测试）
@@ -166,6 +182,7 @@ project-root/
 - **基础功能** ✅：任务管理、四象限视图、标签管理、用户账户等所有基本功能均已实现
 - **Electron桌面应用** ✅：已成功构建Windows版本安装包
 - **数据导入/导出** ✅：已在Electron版本中实现
+- **GitHub仓库** ✅：已成功上传至GitHub，地址：https://github.com/idealistz/smartToDo
 
 未来优化方向：
 
@@ -192,9 +209,29 @@ project-root/
   - [ ] 自定义键盘快捷键
   - [ ] 优化移动端体验
 
+## 💡 贡献指南
+
+欢迎对本项目进行贡献！以下是参与贡献的步骤：
+
+1. Fork 本仓库
+2. 创建你的特性分支 (`git checkout -b feature/amazing-feature`)
+3. 提交你的更改 (`git commit -m '添加某功能'`)
+4. 推送到分支 (`git push origin feature/amazing-feature`)
+5. 打开一个 Pull Request
+
+### 贡献原则
+- 保持代码风格一致
+- 添加必要的注释和文档
+- 确保新代码不破坏现有功能
+- 如有重大更改，请先讨论再实现
+
 ## 👨‍💻 作者
 
-本项目是 [idealistz] 的毕业设计作品。
+本项目是 [idealistz](https://github.com/idealistz) 的毕业设计作品。
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 详情请查看 [LICENSE](LICENSE) 文件
 
 ## 🙏 致谢
 
